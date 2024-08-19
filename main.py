@@ -48,7 +48,8 @@ async def main():
         print('Error:')
         if odata_error.error:
             print(odata_error.error.code, odata_error.error.message)
-    
+
+    cleaner()
     
 
 
