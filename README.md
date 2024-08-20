@@ -21,5 +21,5 @@ A daemon application for automating data analysis.
 
 ## Support
 
-For support, email kstarks@ridensafe.com.
+For support, email kason.starks@gmail.com.
 
