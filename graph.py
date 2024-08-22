@@ -57,6 +57,13 @@ class Graph:
         self.monthly_report_drivers_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAADvJ4xRAAA='
         self.monthly_report_orders_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAADvJ4xSAAA='
     
+        self.samsara_daily_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_yAAA='        
+        self.samsara_weekly_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_zAAA='        
+        self.samsara_monthly_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_0AAA='        
+
+        #Samsara Folder
+        self.samsara_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_xAAA='
+
 
         self.folder_dictionary = {
             'daily_driver': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.daily_report_drivers_folder_id),
@@ -66,14 +73,23 @@ class Graph:
             'weekly_order': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.weekly_report_orders_folder_id),
 
             'monthly_driver': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.monthly_report_drivers_folder_id),
-            'monthly_order': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.monthly_report_orders_folder_id)
+            'monthly_order': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.monthly_report_orders_folder_id),
+
+            'samsara_daily': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.samsara_daily_folder_id),
+            'samsara_weekly': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.samsara_weekly_folder_id),
+            'samsara_monthly': self.app_data_folder_path.child_folders.by_mail_folder_id1(self.samsara_monthly_folder_id),
         }
 
         self.folders = {
             'daily': self.daily_reports_folder_id,
             'weekly': self.weekly_reports_folder_id,
-            'monthly': self.monthly_reports_folder_id
+            'monthly': self.monthly_reports_folder_id,
+
+            'samsara_daily': self.samsara_daily_folder_id,
+            'samsara_weekly': self.samsara_weekly_folder_id,
+            'samsara_monthly': self.samsara_monthly_folder_id,
         }
+
 
 
     async def get_app_only_token(self):
@@ -167,4 +183,6 @@ class Graph:
         	),
         )
         await self.app_client.users.by_user_id(self.user).send_mail.post(request_body)
+        
+    
    

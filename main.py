@@ -14,6 +14,7 @@ from openpyxl.utils import get_column_letter
 import shutil
 import datetime
 from cleaner import cleaner
+from samsara import Samsara
 
 
 async def main():
@@ -26,6 +27,7 @@ async def main():
 
     graph: Graph = Graph(azure_settings)
 
+    cleaner()
 
     today = datetime.datetime.today()
     weekday = today.weekday()
@@ -48,9 +50,8 @@ async def main():
         print('Error:')
         if odata_error.error:
             print(odata_error.error.code, odata_error.error.message)
-
-    cleaner()
     
+
 
 
 #-------------------Graph Functions-----------------------------------
@@ -83,7 +84,7 @@ async def get_attachment(graph: Graph, message_id, attachment_id, folder):
     byte = attachment.content_bytes
     byte_decoded = base64.b64decode(byte)
     csv = str(byte_decoded)[2:-1]
-    csv_modified = csv.replace('\\r\\n', '\n')
+    csv_modified = csv.replace('\\r\\n', '\n').replace('\\n', '\n')
     return csv_modified
 
 async def send_email(graph: Graph, date, report_type, byte, file_name):
@@ -165,9 +166,10 @@ def file_to_byte(file_path):
 
 class UploadedFiles:
 
-    def __init__(self, x, y) -> None:
+    def __init__(self, x, y, z) -> None:
         self.drivers = x
         self.orders = y
+        self.samsara = z
 
 #-------------------Report Classes-----------------------------------
 
@@ -175,11 +177,12 @@ class Daily_Report:
 
     def __init__(self, graph: Graph):
         print('initializing daily report')
-
-        self.daily_files_object = UploadedFiles("","")
+        #Is this being used?
+        self.daily_files_object = UploadedFiles("","","")
 
         self.driver_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/daily/drivers/driver_report.csv'
         self.order_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/daily/orders/order_report.csv'
+        self.samsara_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/daily/samsara/safety_report.csv'
         self.excel_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/daily/daily_report.xlsx'
 
         self.date_range = ''
@@ -189,9 +192,10 @@ class Daily_Report:
     async def _init(self, graph: Graph):
         self.driver = await self.get_daily_report_drivers(graph)  
         self.order = await self.get_daily_report_orders(graph)
+        self.samsara = await self.get_samsara_daily_report(graph)
         print('Analysis initiated...')
-
-        analysis_object = UploadedFiles(self.driver_file, self.order_file)
+        
+        analysis_object = UploadedFiles(self.driver_file, self.order_file, self.samsara_file)
         analysis_results = Analyze(analysis_object)
         table_object = analysis_results.data 
         self.date_range = table_object.date_range
@@ -222,17 +226,25 @@ class Daily_Report:
 
         print(csv, file=open(self.order_file, 'w', newline='\n'))
 
+    async def get_samsara_daily_report(self, graph: Graph):
+        print('pulling samsara report...')
+        folder = 'samsara_daily'
+        message_id = await get_message_id(graph, folder)
+        attachment_id = await get_attachment_id(graph, message_id, folder)
+        csv = await get_attachment(graph, message_id, attachment_id, folder)
 
+        print(csv, file=open(self.samsara_file, 'w', newline='\n') )
 
 class Weekly_Report:
 
-    def __init__(self, graph: Graph):
+    def __init__(self):
         print('initializing weekly report')
 
-        self.weekly_files_object = UploadedFiles("","")
+        self.weekly_files_object = UploadedFiles("","","")
 
         self.driver_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/drivers/driver_report.csv'
         self.order_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/orders/order_report.csv'
+        self.samsara_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/samsara/safety_report.csv'
         self.excel_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/weekly_report.xlsx'
 
         self.date_range = ''
@@ -242,8 +254,10 @@ class Weekly_Report:
     async def _init(self, graph: Graph):
         self.driver = await self.get_weekly_report_drivers(graph)  
         self.order = await self.get_weekly_report_orders(graph)
+        self.samsara = await self.get_samsara_weekly_report(graph)
         print('Analysis initiated...')
-        analysis_object = UploadedFiles(self.driver_file, self.order_file)
+
+        analysis_object = UploadedFiles(self.driver_file, self.order_file, self.samsara)
         analysis_results = Analyze(analysis_object)
         table_object = analysis_results.data 
         self.date_range = table_object.date_range
@@ -271,6 +285,16 @@ class Weekly_Report:
 
         print(csv, file=open('C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/orders/order_report.csv', 'w', newline='\n'))
 
+    async def get_samsara_weekly_report(self, graph: Graph):
+           print('pulling samsara report...')
+           folder = 'samsara_weekly'
+           message_id = await get_message_id(graph, folder)
+           attachment_id = await get_message_id(graph, message_id, folder)
+           csv = await get_attachment(graph, message_id, attachment_id, folder)
+
+           print(csv, file=open(self.samsara_file, 'w', newline='\n') )
+
+
 
 
 class Monthly_Report:
@@ -278,10 +302,11 @@ class Monthly_Report:
     def __init__(self, graph: Graph):
         print('initializing monthly report')
 
-        self.monthly_files_object = UploadedFiles("","")
+        self.monthly_files_object = UploadedFiles("","","")
 
         self.driver_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/drivers/driver_report.csv'
         self.order_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/orders/order_report.csv'
+        self.samsara_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/samsara/safety_report.csv'
         self.excel_file = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/monthly_report.xlsx'
 
         self.date_range = ''
@@ -291,7 +316,9 @@ class Monthly_Report:
     async def _init(self, graph: Graph):
         self.driver = await self.get_monthly_report_drivers(graph)  
         self.order = await self.get_monthly_report_orders(graph)
+        self.samsara = await self.get_samsara_monthly_report(graph)
         print('Analysis initiated...')
+
         analysis_object = UploadedFiles(self.driver_file, self.order_file)
         analysis_results = Analyze(analysis_object)
         table_object = analysis_results.data 
@@ -319,6 +346,16 @@ class Monthly_Report:
         csv = await get_attachment(graph, message_id, attachment_id, folder)
 
         print(csv, file=open('C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/orders/order_report.csv', 'w', newline='\n'))
+ 
+    async def get_samsara_monthly_report(self, graph: Graph):
+           print('pulling samsara report...')
+           folder = 'samsara_monthly'
+           message_id = await get_message_id(graph, folder)
+           attachment_id = await get_message_id(graph, message_id, folder)
+           csv = await get_attachment(graph, message_id, attachment_id, folder)
+
+           print(csv, file=open(self.samsara_file, 'w', newline='\n') )
+
 
 
 
