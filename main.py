@@ -8,13 +8,10 @@ from analysis import Analyze
 import pandas as pd
 
 from openpyxl import load_workbook
-from openpyxl.styles import Alignment, PatternFill
-from openpyxl.utils import get_column_letter
-
+from openpyxl.styles import Alignment 
 import shutil
 import datetime
 from cleaner import cleaner
-from samsara import Samsara
 
 
 async def main():
@@ -55,10 +52,6 @@ async def main():
 
 
 #-------------------Graph Functions-----------------------------------
-
-async def display_access_token(graph: Graph):
-    token = await graph.get_app_only_token()
-    print('App-only token:', token, '\n')
     
 async def get_inboxes(graph: Graph, folderstr: str):
     folders_page = await graph.get_inbox(folderstr)
@@ -87,9 +80,11 @@ async def get_attachment(graph: Graph, message_id, attachment_id, folder):
     csv_modified = csv.replace('\\r\\n', '\n').replace('\\n', '\n')
     return csv_modified
 
-async def send_email(graph: Graph, date, report_type, byte, file_name):
+async def send_email_with_attachment(graph: Graph, date, report_type, byte, file_name):
     print('Sending email...')
-    await graph.send_email(date=date, report_type=report_type, byte=byte, file_name=file_name)
+    email_list = ['kstarks@ridensafe.com', 'cwise@ridensafe.com']
+    for email in email_list:
+        await graph.send_email(date=date, report_type=report_type, byte=byte, file_name=file_name, email_address=email)
 
 #-------------------Create Instance Functions-------------------------
 
@@ -111,7 +106,6 @@ async def create_monthly_report(graph: Graph):
 
 #------------------Analysis Functions--------------------------------
 
-#Careful running - this function is being adjusted and tested#
 def export_excel(file_path, object):
     template = 'C:/Users/Dispatch2/Desktop/DataAutomation/reports/blank.xlsx'
 
@@ -124,8 +118,8 @@ def export_excel(file_path, object):
         if_sheet_exists='overlay'
     ) as writer:
         object.driver_table.to_excel(writer, sheet_name='Sheet1', startrow=0, startcol=0, index=False)
-        object.mode_table.to_excel(writer, sheet_name='Sheet1', startrow=0, startcol=7, index=False)
-        object.status_table.to_excel(writer, sheet_name='Sheet1', startrow=7, startcol=7, index=False)
+        object.mode_table.to_excel(writer, sheet_name='Sheet1', startrow=0, startcol=8, index=False)
+        object.status_table.to_excel(writer, sheet_name='Sheet1', startrow=7, startcol=8, index=False)
 
     wb = load_workbook(file_path)
     ws = wb.active
@@ -204,7 +198,7 @@ class Daily_Report:
         export_excel(self.excel_file, table_object)
         byte = file_to_byte(self.excel_file)
 
-        await send_email(graph, date=self.date_range, report_type=self.report_type, byte=byte, file_name=self.file_name)
+        await send_email_with_attachment(graph, date=self.date_range, report_type=self.report_type, byte=byte, file_name=self.file_name)
 
 
 
@@ -237,7 +231,7 @@ class Daily_Report:
 
 class Weekly_Report:
 
-    def __init__(self):
+    def __init__(self, graph: Graph):
         print('initializing weekly report')
 
         self.weekly_files_object = UploadedFiles("","","")
@@ -255,9 +249,9 @@ class Weekly_Report:
         self.driver = await self.get_weekly_report_drivers(graph)  
         self.order = await self.get_weekly_report_orders(graph)
         self.samsara = await self.get_samsara_weekly_report(graph)
-        print('Analysis initiated...')
 
-        analysis_object = UploadedFiles(self.driver_file, self.order_file, self.samsara)
+        print('Analysis initiated...')
+        analysis_object = UploadedFiles(self.driver_file, self.order_file, self.samsara_file)
         analysis_results = Analyze(analysis_object)
         table_object = analysis_results.data 
         self.date_range = table_object.date_range
@@ -265,7 +259,7 @@ class Weekly_Report:
         export_excel(self.excel_file, table_object)
         byte = file_to_byte(self.excel_file)
 
-        await send_email(graph, date=self.date_range, report_type=self.report_type, byte=byte, file_name=self.file_name)
+        await send_email_with_attachment(graph, date=self.date_range, report_type=self.report_type, byte=byte, file_name=self.file_name)
 
     async def get_weekly_report_drivers(self, graph: Graph):
         print('pulling weekly report for drivers...')
@@ -274,7 +268,7 @@ class Weekly_Report:
         attachment_id = await get_attachment_id(graph, message_id, folder)
         csv = await get_attachment(graph, message_id, attachment_id, folder)
 
-        print(csv, file=open('C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/drivers/driver_report.csv', 'w', newline='\n'))
+        print(csv, file=open(self.driver_file, 'w', newline='\n'))
 
     async def get_weekly_report_orders(self, graph: Graph):
         print('pulling weekly report for orders...')
@@ -283,16 +277,15 @@ class Weekly_Report:
         attachment_id = await get_attachment_id(graph, message_id, folder)
         csv = await get_attachment(graph, message_id, attachment_id, folder)
 
-        print(csv, file=open('C:/Users/Dispatch2/Desktop/DataAutomation/reports/weekly/orders/order_report.csv', 'w', newline='\n'))
+        print(csv, file=open(self.order_file, 'w', newline='\n'))
 
     async def get_samsara_weekly_report(self, graph: Graph):
-           print('pulling samsara report...')
-           folder = 'samsara_weekly'
-           message_id = await get_message_id(graph, folder)
-           attachment_id = await get_message_id(graph, message_id, folder)
-           csv = await get_attachment(graph, message_id, attachment_id, folder)
-
-           print(csv, file=open(self.samsara_file, 'w', newline='\n') )
+        print('pulling samsara report...')
+        folder = 'samsara_weekly'
+        message_id = await get_message_id(graph, folder)
+        attachment_id = await get_attachment_id(graph, message_id, folder)
+        csv = await get_attachment(graph, message_id, attachment_id, folder)
+        print(csv, file=open(self.samsara_file, 'w', newline='\n') )
 
 
 
@@ -319,7 +312,7 @@ class Monthly_Report:
         self.samsara = await self.get_samsara_monthly_report(graph)
         print('Analysis initiated...')
 
-        analysis_object = UploadedFiles(self.driver_file, self.order_file)
+        analysis_object = UploadedFiles(self.driver_file, self.order_file, self.samsara_file)
         analysis_results = Analyze(analysis_object)
         table_object = analysis_results.data 
         self.date_range = table_object.date_range
@@ -327,7 +320,7 @@ class Monthly_Report:
         export_excel(self.excel_file, table_object)
         byte = file_to_byte(self.excel_file)
 
-        await send_email(graph, date=self.date_range, report_type=self.report_type, byte=byte, file_name=self.file_name)
+        await send_email_with_attachment(graph, date=self.date_range, report_type=self.report_type, byte=byte, file_name=self.file_name)
 
     async def get_monthly_report_drivers(self, graph: Graph):
         print('pulling monthly report for drivers...')
@@ -336,7 +329,7 @@ class Monthly_Report:
         attachment_id = await get_attachment_id(graph, message_id, folder)
         csv = await get_attachment(graph, message_id, attachment_id, folder)
 
-        print(csv, file=open('C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/drivers/drivers_report.csv', 'w', newline='\n'))
+        print(csv, file=open(self.driver_file, 'w', newline='\n'))
 
     async def get_monthly_report_orders(self, graph: Graph):
         print('pulling monthly report for orders...')
@@ -345,16 +338,15 @@ class Monthly_Report:
         attachment_id = await get_attachment_id(graph, message_id, folder)
         csv = await get_attachment(graph, message_id, attachment_id, folder)
 
-        print(csv, file=open('C:/Users/Dispatch2/Desktop/DataAutomation/reports/monthly/orders/order_report.csv', 'w', newline='\n'))
+        print(csv, file=open(self.order_file, 'w', newline='\n'))
  
     async def get_samsara_monthly_report(self, graph: Graph):
-           print('pulling samsara report...')
-           folder = 'samsara_monthly'
-           message_id = await get_message_id(graph, folder)
-           attachment_id = await get_message_id(graph, message_id, folder)
-           csv = await get_attachment(graph, message_id, attachment_id, folder)
-
-           print(csv, file=open(self.samsara_file, 'w', newline='\n') )
+        print('pulling samsara report...')
+        folder = 'samsara_monthly'
+        message_id = await get_message_id(graph, folder)
+        attachment_id = await get_attachment_id(graph, message_id, folder)
+        csv = await get_attachment(graph, message_id, attachment_id, folder)
+        print(csv, file=open(self.samsara_file, 'w', newline='\n') )
 
 
 

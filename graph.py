@@ -33,16 +33,16 @@ class Graph:
 
         self.user = 'deae0de2-15e8-425e-8a5a-ef516e856783'
 
-        #Parent Folder
+        #Parent Folder (AppData Folder)
         self.app_data_folder_id = "AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAADnQdigAAA="
         self.app_data_folder_path = self.app_client.users.by_user_id(self.user).mail_folders.by_mail_folder_id(self.app_data_folder_id)
 
-        #Child Folders----------------------
+        #Child Folders (AppData Child Folders)
         self.daily_reports_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAADnQdihAAA='
         self.monthly_reports_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAADnQdijAAA='
         self.weekly_reports_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAADnQdiiAAA='
 
-        #Child Folder Paths
+        #Child Folder Paths 
         self.daily_reports_folder_path = self.app_client.users.by_user_id(self.user).mail_folders.by_mail_folder_id(self.daily_reports_folder_id)
         self.weekly_reports_folder_path = self.app_client.users.by_user_id(self.user).mail_folders.by_mail_folder_id(self.weekly_reports_folder_id)
         self.daily_reports_folder_path = self.app_client.users.by_user_id(self.user).mail_folders.by_mail_folder_id(self.daily_reports_folder_id)
@@ -61,7 +61,7 @@ class Graph:
         self.samsara_weekly_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_zAAA='        
         self.samsara_monthly_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_0AAA='        
 
-        #Samsara Folder
+        #Samsara Folder (AppData Child Folder)
         self.samsara_folder_id = 'AAMkAGUxYjNhMjhjLTAwNDgtNDBlMy1iNWJhLWVhMWI2YWY0N2FiNgAuAAAAAABnaMnddrDARatjpjvAYqRzAQCjWYOTFOeTTZkOXwdENkRPAAD7hZ_xAAA='
 
 
@@ -156,19 +156,19 @@ class Graph:
         return attachment_file
     
 
-    async def send_email(self, date, report_type:str, byte:bytes, file_name:str):
+    async def send_email(self, date, report_type:str, byte:bytes, file_name:str, email_address:str):
         request_body = SendMailPostRequestBody(
         	message = Message(
         		subject = report_type,
         		body = ItemBody(
         			content_type = BodyType.Text,
-        			content = report_type + ' for ' + date,
+        			content = '{report} for {date}'.format(report=report_type, date=date)
         		),
                 importance= 'normal',
         		to_recipients = [
         			Recipient(
         				email_address = EmailAddress(
-        					address = "kstarks@ridensafe.com",
+        					address = email_address,
         				),
         			),
         		],
