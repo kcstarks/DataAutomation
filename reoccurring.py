@@ -1,6 +1,7 @@
 #This file is for alerting users to reoccurring transports that are expiring soon.
 
 import configparser
+import os
 import shutil
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 import asyncio
@@ -9,7 +10,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Alignment 
 import pandas as pd
 from graph import Graph
-from main import get_attachment, get_attachment_id, get_inboxes, get_message_id
+from main import file_to_byte, get_attachment, get_attachment_id, get_message_id
 from pd_reoccurring import Reoccurring_Analysis
 
 
@@ -81,6 +82,12 @@ def export_excel(file_path, table):
     wb.save(file_path)
     print('Data exported to excel file')
    
+async def send_email_with_attachment(graph: Graph, byte, file_name):
+    print('Sending email...')
+    email_list = ['kstarks@ridensafe.com']
+    for email in email_list:
+        await graph.send_email_reoccurring(byte=byte, file_name=file_name, email_address=email)
+
 
 
 
@@ -89,16 +96,19 @@ class Reoccurring_Transports:
     def __init__(self, graph:Graph):
         self.reoccurring_file_csv = 'C:/Users/Dispatch2/Desktop/DataAutomation/reoccurring/reoccurring_transports.csv'
         self.reoccurring_file_excel = 'C:/Users/Dispatch2/Desktop/DataAutomation/reoccurring/reoccurring_transports.xlsx'
-
+        self.report_type = 'Reoccurring'
+        self.file_name = os.path.basename(self.reoccurring_file_excel)
     async def _init(self, graph:Graph):
         print('...')
         await self.mk_reoccurring_csv(graph)
         analysis_result = Reoccurring_Analysis()
         data = analysis_result.data
         table = data.table
-        date = data.date_range
 
         export_excel(self.reoccurring_file_excel, table)
+        byte = file_to_byte(self.reoccurring_file_excel)
+
+        await send_email_with_attachment(graph, byte=byte, file_name=self.file_name)
 
     async def mk_reoccurring_csv(self, graph:Graph):
         folder = 'reoccurring'

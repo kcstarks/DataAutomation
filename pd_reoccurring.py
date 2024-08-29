@@ -2,14 +2,12 @@ import pandas as pd
 import datetime as dt
 
 class ReturnObject:
-    def __init__(self, date_range, table):
-        self.date_range = date_range,
+    def __init__(self, table):
         self.table = table
 
 class Reoccurring_Analysis:
     def __init__(self):
         df = pd.DataFrame(pd.read_csv('C:/Users/Dispatch2/Desktop/DataAutomation/reoccurring/reoccurring_transports.csv', skiprows=1))
-        date_range = pd.DataFrame(pd.read_csv('C:/Users/Dispatch2/Desktop/DataAutomation/reoccurring/reoccurring_transports.csv', nrows=1))
 
         df_no_nans = df.dropna(axis=0) 
         df_unique_only = df_no_nans.drop_duplicates()
@@ -41,5 +39,4 @@ class Reoccurring_Analysis:
         
         self.data = ReturnObject(
             table = df_ending_soon, 
-            date_range = date_range
         )
